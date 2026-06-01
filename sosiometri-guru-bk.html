@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Guru BK — Sosiometri SMP Al Hikmah</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1B4F72;--primary-mid:#2471A3;--primary-light:#5DADE2;
+  --accent:#1ABC9C;--warn:#E67E22;--danger:#E74C3C;--success:#27AE60;
+  --purple:#7D3C98;--indigo:#1F618D;
+  --bg:#EEF3F9;--card:#fff;--border:#D0DCE8;
+  --text:#1C2833;--muted:#6B7A8D;--subtle:#A9B8C8;
+  --radius:14px;--radius-sm:9px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── SIDEBAR LAYOUT ── */
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:var(--primary);flex-shrink:0;display:flex;flex-direction:column}
+.sidebar-brand{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-brand .brand-logo{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;border:1.5px solid rgba(255,255,255,.2)}
+.sidebar-brand h1{font-size:13px;font-weight:700;color:#fff;line-height:1.3}
+.sidebar-brand p{font-size:11px;color:rgba(255,255,255,.6);margin-top:3px}
+.sidebar-nav{padding:14px 10px;flex:1}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;padding:0 8px;margin-bottom:6px;margin-top:12px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;color:rgba(255,255,255,.7);font-size:12px;font-weight:500;transition:all .2s;margin-bottom:2px}
+.nav-item:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+.nav-item .nav-icon{font-size:15px;flex-shrink:0}
+.sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:rgba(255,255,255,.4)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.topbar h2{font-size:15px;font-weight:700;color:var(--primary)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.date-pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--muted)}
+.content{padding:22px 24px;overflow-y:auto;flex:1}
+
+/* ── SECTION ── */
+.section{display:none}.section.active{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:700;color:var(--primary);margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid var(--bg);display:flex;align-items:center;gap:8px}
+.card-title .ct-icon{font-size:16px}
+
+/* ── FORM ── */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.fg label .req{color:var(--danger)}
+.fg input,.fg select{padding:9px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;background:#fff;color:var(--text);outline:none;transition:border .2s;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(93,173,226,.12)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* ── UPLOAD AREA ── */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFCFF}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--primary-light);background:#EBF5FB}
+.upload-zone.has-file{border-color:var(--success);background:#EAFAF1}
+.upload-icon{font-size:36px;margin-bottom:8px}
+.upload-text strong{font-size:14px;color:var(--primary);display:block;margin-bottom:4px}
+.upload-text span{font-size:12px;color:var(--muted)}
+.file-result{display:none;margin-top:12px;background:#EAFAF1;border:1px solid #82E0AA;border-radius:9px;padding:10px 14px;align-items:center;gap:10px}
+.file-result.show{display:flex}
+.file-result .fname{font-size:13px;font-weight:600;color:#1E6E3A}
+.file-result .fdet{font-size:11px;color:var(--muted)}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:#EBF5FB;padding:9px 12px;text-align:left;font-weight:700;color:var(--primary);white-space:nowrap;border-bottom:1.5px solid var(--border)}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--bg);color:var(--text)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FAFCFF}
+.badge{display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.b-blue{background:#D6EAF8;color:#1A5276}
+.b-green{background:#D5F5E3;color:#1E6E3A}
+.b-red{background:#FADBD8;color:#7B241C}
+.b-amber{background:#FEF9E7;color:#7D5A00;border:1px solid #F9CA24}
+.b-purple{background:#F5EEF8;color:#6C3483}
+
+/* ── METRICS ── */
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px}
+.metric .m-val{font-size:26px;font-weight:700;margin-bottom:2px}
+.metric .m-lbl{font-size:11px;color:var(--muted)}
+.metric .m-sub{font-size:11px;font-weight:600;margin-top:4px}
+
+/* ── FILTER BAR ── */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.filter-bar label{font-size:12px;color:var(--muted);font-weight:600}
+.filter-bar select{padding:7px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit;background:#fff;color:var(--text);outline:none;min-width:120px}
+.filter-bar select:focus{border-color:var(--primary-light)}
+
+/* ── RANK BARS ── */
+.rank-list{display:flex;flex-direction:column;gap:7px}
+.rank-item{display:flex;align-items:center;gap:10px;font-size:12px}
+.rank-name{min-width:110px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-bar-wrap{flex:1;background:var(--bg);border-radius:4px;overflow:hidden;height:16px}
+.rank-bar-fill{height:100%;border-radius:4px;transition:width .5s}
+.rank-count{min-width:30px;text-align:right;font-weight:700;color:var(--muted)}
+.rank-pct{min-width:36px;text-align:right;color:var(--subtle);font-size:11px}
+
+/* ── URAIAN ── */
+.uraian-item{display:flex;gap:12px;padding:12px;border-radius:9px;border:1px solid var(--border);margin-bottom:8px}
+.uraian-badge{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.uraian-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.uraian-desc{font-size:12px;color:var(--muted);line-height:1.7}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 20px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#154360}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#1e8449}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}.btn-outline:hover{background:#EBF5FB}
+.btn-sm{padding:6px 14px;font-size:11px}
+
+/* ── ALERT ── */
+.alert{border-radius:9px;padding:10px 14px;font-size:12px;margin-bottom:12px;display:none;align-items:center;gap:9px;border:1px solid}
+.alert.show{display:flex}
+.alert-error{background:#FDEDEC;border-color:#F1948A;color:#7B241C}
+.alert-success{background:#EAFAF1;border-color:#82E0AA;color:#1E6E3A}
+.alert-info{background:#EBF5FB;border-color:#85C1E9;color:#1A5276}
+
+/* ── DISTRIBUSI TABLE ── */
+.dist-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.dist-card{background:var(--bg);border-radius:9px;padding:12px;text-align:center;border:1px solid var(--border)}
+.dist-val{font-size:20px;font-weight:700}
+.dist-lbl{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+.empty-icon{font-size:40px;margin-bottom:10px;display:block}
+
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.chart-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .metrics-row{grid-template-columns:1fr 1fr}
+  .charts-row{grid-template-columns:1fr}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .dist-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo">BK</div>
+    <h1>Dashboard Guru BK</h1>
+    <p>SMP Al Hikmah Surabaya</p>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-label">Menu</div>
+    <div class="nav-item active" onclick="showSection('input')" id="nav-input">
+      <span class="nav-icon">📝</span> Input Data Siswa
+    </div>
+    <div class="nav-item" onclick="showSection('hasil')" id="nav-hasil">
+      <span class="nav-icon">📊</span> Hasil & Analitik
+    </div>
+    <div class="nav-label">Data</div>
+    <div class="nav-item" onclick="showSection('upload')" id="nav-upload">
+      <span class="nav-icon">📂</span> Upload Absen Kelas
+    </div>
+    <div class="nav-item" onclick="showSection('tabel')" id="nav-tabel">
+      <span class="nav-icon">📋</span> Tabel Data Mentah
+    </div>
+  </div>
+  <div class="sidebar-footer">Sosiometri BK v2.0<br>TA 2024/2025</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <h2 id="topTitle">Input Data Siswa</h2>
+    <div class="topbar-right">
+      <div class="date-pill" id="datePill">—</div>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- ALERT GLOBAL -->
+    <div class="alert alert-error" id="gErr"><span>⚠️</span><span id="gErrMsg">Error</span></div>
+    <div class="alert alert-success" id="gOk"><span>✅</span><span id="gOkMsg">Berhasil</span></div>
+    <div class="alert alert-info" id="gInfo"><span>ℹ️</span><span id="gInfoMsg">Info</span></div>
+
+    <!-- ── SECTION: INPUT ── -->
+    <div class="section active" id="sec-input">
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">🎓</span> Data Identitas Siswa</div>
+        <div class="grid3">
+          <div class="fg">
+            <label>No. Absen <span class="req">*</span></label>
+            <input type="number" id="in-absen" placeholder="1 – 50" min="1" max="50">
+          </div>
+          <div class="fg" style="grid-column:span 2">
+            <label>Nama Lengkap <span class="req">*</span></label>
+            <input type="text" id="in-nama" placeholder="Nama sesuai buku absen">
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="fg">
+            <label>Nama Panggilan <span class="req">*</span></label>
+            <input type="text" id="in-panggil" placeholder="Nama panggilan">
+          </div>
+          <div class="fg">
+            <label>Kelas <span class="req">*</span></label>
+            <select id="in-kelas">
+              <option value="">-- Pilih --</option>
+              <optgroup label="Kelas 7"><option>7A</option><option>7B</option><option>7C</option><option>7D</option><option>7E</option><option>7F</option><option>7G</option><option>7H</option><option>7I</option></optgroup>
+              <optgroup label="Kelas 8"><option>8A</option><option>8B</option><option>8C</option><option>8D</option><option>8E</option><option>8F</option><option>8G</option><option>8H</option><option>8I</option></optgroup>
+              <optgroup label="Kelas 9"><option>9A</option><option>9B</option><option>9C</option><option>9D</option><option>9E</option><option>9F</option><option>9G</option><option>9H</option><option>9I</option></optgroup>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Jenis Kelamin <span class="req">*</span></label>
+            <select id="in-jk">
+              <option value="">-- Pilih --</option>
+              <option value="L">Laki-laki (L)</option>
+              <option value="P">Perempuan (P)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="fg">
+            <label>Tahun Pelajaran <span class="req">*</span></label>
+            <select id="in-tp">
+              <option value="2024/2025">2024/2025</option>
+              <option value="2025/2026">2025/2026</option>
+              <option value="2023/2024">2023/2024</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Tanggal Pengisian</label>
+            <input type="text" id="in-tgl" readonly>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">📝</span> Hasil Sosiometri Siswa</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">Masukkan jawaban sosiometri siswa di bawah ini. Isi berdasarkan form yang telah diisi siswa. Untuk setiap kolom nama, isi dengan nama panggilan. Jika tidak ada, isi dengan "Tidak Ada".</p>
+
+        <!-- Q1 -->
+        <div style="margin-bottom:18px">
+          <div style="background:var(--primary);color:#fff;border-radius:9px 9px 0 0;padding:10px 14px;font-size:12px;font-weight:600">
+            1. Teman yang Disenangi (maks. 4 siswa)
+          </div>
+          <div style="border:1.5px solid var(--border);border-top:none;border-radius:0 0 9px 9px;overflow:hidden">
+            <div id="q1-rows"></div>
+          </div>
+        </div>
+        <!-- Q2 -->
+        <div style="margin-bottom:18px">
+          <div style="background:#7B241C;color:#fff;border-radius:9px 9px 0 0;padding:10px 14px;font-size:12px;font-weight:600">
+            2. Teman yang Kurang Disenangi (maks. 4 siswa)
+          </div>
+          <div style="border:1.5px solid var(--border);border-top:none;border-radius:0 0 9px 9px;overflow:hidden">
+            <div id="q2-rows"></div>
+          </div>
+        </div>
+        <!-- Q3 -->
+        <div style="margin-bottom:18px">
+          <div style="background:#7D5A00;color:#fff;border-radius:9px 9px 0 0;padding:10px 14px;font-size:12px;font-weight:600">
+            3. Teman yang Perlu Perhatian BK (maks. 4 siswa)
+          </div>
+          <div style="border:1.5px solid var(--border);border-top:none;border-radius:0 0 9px 9px;overflow:hidden">
+            <div id="q3-rows"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-outline" onclick="clearInput()">Bersihkan</button>
+          <button class="btn btn-primary" onclick="simpanData()">💾 Simpan Data Siswa</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: UPLOAD ── -->
+    <div class="section" id="sec-upload">
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">📂</span> Upload Data Absen Kelas (Excel)</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+          Upload file Excel absen kelas untuk menampilkan daftar siswa pada menu Input. Format kolom: <strong>A=No.Absen, B=Nama Lengkap, C=Nama Panggilan</strong>.
+        </p>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('xlsInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+          <div class="upload-icon">📊</div>
+          <div class="upload-text">
+            <strong>Klik atau seret file Excel ke sini</strong>
+            <span>Format: .xlsx atau .xls · Kolom A=Absen, B=Nama Lengkap, C=Nama Panggil</span>
+          </div>
+          <input type="file" id="xlsInput" accept=".xlsx,.xls" style="display:none" onchange="loadExcel(this.files[0])">
+        </div>
+        <div class="file-result" id="fileResult">
+          <span style="font-size:22px">📗</span>
+          <div>
+            <div class="fname" id="fName">file.xlsx</div>
+            <div class="fdet" id="fDet">0 siswa</div>
+          </div>
+          <span style="margin-left:auto;cursor:pointer;color:var(--danger);font-size:20px" onclick="clearExcel()">✕</span>
+        </div>
+      </div>
+      <div class="card" id="previewCard" style="display:none">
+        <div class="card-title"><span class="ct-icon">👥</span> Preview Data Absen</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No. Absen</th><th>Nama Lengkap</th><th>Nama Panggilan</th></tr></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: HASIL ── -->
+    <div class="section" id="sec-hasil">
+      <div class="filter-bar">
+        <label>Filter:</label>
+        <select id="f-kelas" onchange="renderHasil()">
+          <option value="">Semua Kelas</option>
+        </select>
+        <select id="f-tp" onchange="renderHasil()">
+          <option value="">Semua TA</option>
+          <option value="2024/2025">2024/2025</option>
+          <option value="2025/2026">2025/2026</option>
+          <option value="2023/2024">2023/2024</option>
+        </select>
+        <select id="f-jk" onchange="renderHasil()">
+          <option value="">Semua JK</option>
+          <option value="L">Laki-laki</option>
+          <option value="P">Perempuan</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="renderHasil()">🔄 Refresh</button>
+      </div>
+
+      <div id="hasildiv">
+        <div class="empty"><span class="empty-icon">📭</span>Belum ada data — masukkan data siswa terlebih dahulu.</div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: TABEL ── -->
+    <div class="section" id="sec-tabel">
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">📋</span> Tabel Data Mentah Sosiometri</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <select id="tbl-kelas" onchange="renderTabel()" style="padding:6px 10px;font-size:12px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit">
+            <option value="">Semua Kelas</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="hapusSemua()">🗑 Hapus Semua</button>
+        </div>
+        <div id="tabelWrap">
+          <div class="empty"><span class="empty-icon">📭</span>Belum ada data.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ── CONFIG ──
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzUmkGvckG5edHfF2k0vYbWyxxzG_KpDc6Vbx_h0-WKc5Lf9XpJXEcxUWC4fxYRGZQ7/exec";
+
+// ── DATE ──
+const NOW = new Date();
+function formatDate(d){
+  const days=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+document.getElementById('datePill').textContent = formatDate(NOW);
+document.getElementById('in-tgl').value = formatDate(NOW);
+
+// ── STATE ──
+let classData = [];
+let sosiData = JSON.parse(localStorage.getItem('sosiData') || '[]');
+let chartInstances = {};
+
+// ── NAV ──
+const TITLES = {input:'Input Data Siswa',hasil:'Hasil & Analitik',upload:'Upload Absen Kelas',tabel:'Tabel Data Mentah'};
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  document.getElementById('topTitle').textContent = TITLES[id]||'';
+  if(id==='hasil') renderHasil();
+  if(id==='tabel') renderTabel();
+}
+
+// ── ALERT ──
+function showAlert(type, msg){
+  const map={error:['gErr','gErrMsg'],success:['gOk','gOkMsg'],info:['gInfo','gInfoMsg']};
+  const [id,mid]=map[type]||map.error;
+  document.getElementById(mid).textContent=msg;
+  const el=document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),4500);
+}
+
+// ── BUILD Q ROWS (input form) ──
+function buildQRows(){
+  ['q1','q2','q3'].forEach(q=>{
+    const cont=document.getElementById(q+'-rows');
+    cont.innerHTML='';
+    for(let i=1;i<=4;i++){
+      const row=document.createElement('div');
+      row.style.cssText='display:grid;grid-template-columns:32px 1fr 2fr;gap:8px;padding:10px 14px;border-bottom:1px solid #F0F5FA;align-items:center';
+      row.innerHTML=`
+        <span style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">${i}</span>
+        <input style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit;outline:none" id="${q}-n${i}" placeholder="Nama panggilan" type="text">
+        <input style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit;outline:none" id="${q}-a${i}" placeholder="${q==='q1'?'Alasan disenangi...':q==='q2'?'Alasan kurang dekat...':'Alasan perlu perhatian BK...'}" type="text">
+      `;
+      cont.appendChild(row);
+    }
+  });
+}
+buildQRows();
+
+// ── COLLECT Q (input) ──
+function collectQInput(q){
+  const result=[];
+  for(let i=1;i<=4;i++){
+    const nama=(document.getElementById(q+'-n'+i)?.value||'').trim();
+    const alasan=(document.getElementById(q+'-a'+i)?.value||'').trim();
+    if(nama) result.push({nama, alasan});
+  }
+  return result.length>0?result:[{nama:'Tidak Ada',alasan:''}];
+}
+
+function clearInput(){
+  ['in-absen','in-nama','in-panggil'].forEach(id=>document.getElementById(id).value='');
+  ['in-kelas','in-jk'].forEach(id=>document.getElementById(id).value='');
+  ['q1','q2','q3'].forEach(q=>{
+    for(let i=1;i<=4;i++){
+      document.getElementById(q+'-n'+i).value='';
+      document.getElementById(q+'-a'+i).value='';
+    }
+  });
+}
+
+// ── SIMPAN DATA ──
+function simpanData(){
+  const absen=document.getElementById('in-absen').value.trim();
+  const nama=document.getElementById('in-nama').value.trim();
+  const panggil=document.getElementById('in-panggil').value.trim();
+  const kelas=document.getElementById('in-kelas').value;
+  const jk=document.getElementById('in-jk').value;
+  const tp=document.getElementById('in-tp').value;
+  if(!absen||!nama||!panggil||!kelas||!jk){showAlert('error','Lengkapi semua data yang wajib diisi (*).');return;}
+  const entry={
+    id: Date.now(),
+    timestamp: NOW.toLocaleString('id-ID'),
+    tanggal: formatDate(NOW),
+    noAbsen: absen, namaLengkap: nama, namaPanggil: panggil,
+    kelas, jenisKelamin: jk, tahunPelajaran: tp,
+    q1: collectQInput('q1'), q2: collectQInput('q2'), q3: collectQInput('q3')
+  };
+  sosiData.push(entry);
+  localStorage.setItem('sosiData', JSON.stringify(sosiData));
+  // Send to Sheets
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}).catch(()=>{});
+  showAlert('success',`Data ${nama} (Kelas ${kelas}) berhasil disimpan!`);
+  clearInput();
+  updateKelasFilter();
+}
+
+// ── EXCEL UPLOAD ──
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  const file=e.dataTransfer.files[0];
+  if(file) loadExcel(file);
+}
+function loadExcel(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      classData=[];
+      rows.forEach((r,idx)=>{
+        if(idx===0&&isNaN(r[0])) return;
+        if(!r[0]) return;
+        classData.push({absen:String(r[0]).trim(),nama:String(r[1]||'').trim(),panggil:String(r[2]||r[1]||'').trim()});
+      });
+      document.getElementById('uploadZone').classList.add('has-file');
+      document.getElementById('fileResult').classList.add('show');
+      document.getElementById('fName').textContent=file.name;
+      document.getElementById('fDet').textContent=classData.length+' siswa berhasil dimuat';
+      showPreview();
+      showAlert('success',`${classData.length} data siswa dimuat dari ${file.name}`);
+    }catch(err){showAlert('error','Gagal membaca file Excel. Pastikan format: A=Absen, B=Nama, C=Panggilan.');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function clearExcel(){
+  classData=[];
+  document.getElementById('uploadZone').classList.remove('has-file');
+  document.getElementById('fileResult').classList.remove('show');
+  document.getElementById('xlsInput').value='';
+  document.getElementById('previewCard').style.display='none';
+}
+function showPreview(){
+  const body=document.getElementById('previewBody');
+  body.innerHTML=classData.slice(0,20).map(s=>`<tr><td><span class="badge b-blue">${s.absen}</span></td><td>${s.nama}</td><td><strong>${s.panggil}</strong></td></tr>`).join('');
+  if(classData.length>20) body.innerHTML+=`<tr><td colspan="3" style="text-align:center;color:var(--muted);font-size:11px;padding:8px">... dan ${classData.length-20} siswa lainnya</td></tr>`;
+  document.getElementById('previewCard').style.display='block';
+}
+
+// ── KELAS FILTER UPDATE ──
+function updateKelasFilter(){
+  const classes=[...new Set(sosiData.map(d=>d.kelas))].sort();
+  ['f-kelas','tbl-kelas'].forEach(id=>{
+    const sel=document.getElementById(id);
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Semua Kelas</option>';
+    classes.forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+    sel.value=cur;
+  });
+}
+updateKelasFilter();
+
+// ── FILTER DATA ──
+function filterData(){
+  let d=[...sosiData];
+  const fk=document.getElementById('f-kelas').value;
+  const ft=document.getElementById('f-tp').value;
+  const fj=document.getElementById('f-jk').value;
+  if(fk) d=d.filter(x=>x.kelas===fk);
+  if(ft) d=d.filter(x=>x.tahunPelajaran===ft);
+  if(fj) d=d.filter(x=>x.jenisKelamin===fj);
+  return d;
+}
+
+// ── RENDER HASIL ──
+function renderHasil(){
+  const data=filterData();
+  const div=document.getElementById('hasildiv');
+  if(data.length===0){
+    div.innerHTML='<div class="empty"><span class="empty-icon">📭</span>Belum ada data sosiometri. Masukkan data siswa terlebih dahulu.</div>';
+    return;
+  }
+  const total=data.length;
+  // Hitung skor
+  const skorSuka={}, skorTdk={}, skorBK={};
+  data.forEach(d=>{
+    d.q1.forEach(x=>{if(x.nama&&x.nama!=='Tidak Ada'){skorSuka[x.nama]=(skorSuka[x.nama]||0)+1;}});
+    d.q2.forEach(x=>{if(x.nama&&x.nama!=='Tidak Ada'){skorTdk[x.nama]=(skorTdk[x.nama]||0)+1;}});
+    d.q3.forEach(x=>{if(x.nama&&x.nama!=='Tidak Ada'){skorBK[x.nama]=(skorBK[x.nama]||0)+1;}});
+  });
+  const topSuka=Object.entries(skorSuka).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const topTdk=Object.entries(skorTdk).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const topBK=Object.entries(skorBK).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxSuka=topSuka[0]?.[1]||1;
+  const maxTdk=topTdk[0]?.[1]||1;
+  // Distribusi: bintang(≥30%), populer(≥15%), rata-rata, terisolasi(dipilih 0 suka)
+  const sukaMap={}; data.forEach(d=>{d.q1.forEach(x=>{if(x.nama&&x.nama!=='Tidak Ada') sukaMap[x.nama]=(sukaMap[x.nama]||0)+1;});});
+  const namaSet=[...new Set(data.map(d=>d.namaPanggil))];
+  let star=0,pop=0,avg=0,iso=0,rej=0;
+  namaSet.forEach(n=>{
+    const sc=sukaMap[n]||0; const pct=sc/total;
+    if(pct>=.35) star++;
+    else if(pct>=.15) pop++;
+    else if(sc>0) avg++;
+    else {
+      const tdkSc=skorTdk[n]||0;
+      if(tdkSc>=2) rej++;
+      else iso++;
+    }
+  });
+  // Build HTML
+  div.innerHTML = `
+  <div class="metrics-row">
+    <div class="metric"><div class="m-val" style="color:var(--primary)">${total}</div><div class="m-lbl">Total Responden</div></div>
+    <div class="metric"><div class="m-val" style="color:var(--success)">${topSuka.length}</div><div class="m-lbl">Siswa Dipilih (Suka)</div><div class="m-sub" style="color:var(--success)">${topSuka[0]?topSuka[0][0]+' ('+topSuka[0][1]+'x)':'—'}</div></div>
+    <div class="metric"><div class="m-val" style="color:var(--danger)">${topTdk.length}</div><div class="m-lbl">Siswa Dipilih (Tdk Suka)</div><div class="m-sub" style="color:var(--danger)">${topTdk[0]?topTdk[0][0]+' ('+topTdk[0][1]+'x)':'—'}</div></div>
+    <div class="metric"><div class="m-val" style="color:var(--warn)">${topBK.length}</div><div class="m-lbl">Nominasi Perhatian BK</div><div class="m-sub" style="color:var(--warn)">${topBK[0]?topBK[0][0]+' ('+topBK[0][1]+'x)':'—'}</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">📊 Siswa Paling Banyak Disenangi</div>
+      <div class="rank-list">${topSuka.map(([n,c])=>`
+        <div class="rank-item">
+          <div class="rank-name">${n}</div>
+          <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.round(c/maxSuka*100)}%;background:#27AE60"></div></div>
+          <div class="rank-count">${c}x</div>
+          <div class="rank-pct">${Math.round(c/total*100)}%</div>
+        </div>`).join('')||'<div class="empty" style="padding:20px">Belum ada data</div>'}</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📊 Siswa Paling Kurang Disenangi</div>
+      <div class="rank-list">${topTdk.map(([n,c])=>`
+        <div class="rank-item">
+          <div class="rank-name">${n}</div>
+          <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.round(c/maxTdk*100)}%;background:#E74C3C"></div></div>
+          <div class="rank-count">${c}x</div>
+          <div class="rank-pct">${Math.round(c/total*100)}%</div>
+        </div>`).join('')||'<div class="empty" style="padding:20px">Belum ada data</div>'}</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">🔔 Siswa yang Perlu Perhatian BK</div>
+      <div class="rank-list">${topBK.map(([n,c])=>`
+        <div class="rank-item">
+          <div class="rank-name">${n}</div>
+          <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.round(c/(topBK[0][1])*100)}%;background:#E67E22"></div></div>
+          <div class="rank-count">${c}x</div>
+          <div class="rank-pct">${Math.round(c/total*100)}%</div>
+        </div>`).join('')||'<div class="empty" style="padding:20px">Belum ada data</div>'}</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🥧 Distribusi Tipe Sosial Siswa</div>
+      <div class="dist-grid">
+        <div class="dist-card"><div class="dist-val" style="color:#27AE60">${star}</div><div class="dist-lbl">Bintang Sosial</div></div>
+        <div class="dist-card"><div class="dist-val" style="color:#2471A3">${pop}</div><div class="dist-lbl">Populer</div></div>
+        <div class="dist-card"><div class="dist-val" style="color:#7D3C98">${avg}</div><div class="dist-lbl">Rata-rata</div></div>
+        <div class="dist-card"><div class="dist-val" style="color:#E67E22">${iso}</div><div class="dist-lbl">Terisolasi</div></div>
+        <div class="dist-card"><div class="dist-val" style="color:#E74C3C">${rej}</div><div class="dist-lbl">Tertolak</div></div>
+      </div>
+      <div style="position:relative;height:160px"><canvas id="donutChart" role="img" aria-label="Distribusi tipe sosial siswa">Distribusi sosiometri kelas.</canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ct-icon">📝</span> Uraian Singkat Hasil Sosiometri</div>
+    ${buildUraian(topSuka, topTdk, topBK, total, data)}
+  </div>`;
+
+  // Donut chart
+  const ctx=document.getElementById('donutChart');
+  if(ctx){
+    if(chartInstances['donut']) chartInstances['donut'].destroy();
+    chartInstances['donut']=new Chart(ctx,{
+      type:'doughnut',
+      data:{labels:['Bintang Sosial','Populer','Rata-rata','Terisolasi','Tertolak'],
+        datasets:[{data:[star,pop,avg,iso,rej],backgroundColor:['#27AE60','#2471A3','#7D3C98','#E67E22','#E74C3C'],borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} siswa (${Math.round(c.raw/Math.max(namaSet.length,1)*100)}%)`}}}}
+    });
+  }
+}
+
+function buildUraian(topSuka, topTdk, topBK, total, data){
+  const fk=document.getElementById('f-kelas').value||'semua kelas';
+  const sukaNames=topSuka.slice(0,3).map(([n,c])=>`<strong>${n}</strong> (${Math.round(c/total*100)}%)`).join(', ');
+  const tdkNames=topTdk.slice(0,2).map(([n,c])=>`<strong>${n}</strong> (${Math.round(c/total*100)}%)`).join(', ');
+  const bkNames=topBK.slice(0,3).map(([n,c])=>`<strong>${n}</strong>`).join(', ');
+  const lk=data.filter(d=>d.jenisKelamin==='L').length;
+  const pr=data.filter(d=>d.jenisKelamin==='P').length;
+  return `
+  <div class="uraian-item" style="background:#EAFAF1;border-color:#82E0AA">
+    <div class="uraian-badge" style="background:#D5F5E3;color:#1E6E3A">S</div>
+    <div><div class="uraian-title">Siswa Paling Banyak Disenangi</div>
+    <div class="uraian-desc">Berdasarkan data sosiometri ${fk} dengan <strong>${total} responden</strong> (L:${lk}, P:${pr}), siswa yang paling banyak dipilih sebagai teman yang disenangi adalah ${sukaNames||'—'}. Siswa-siswa ini memiliki peran sosial yang kuat dan dapat dijadikan <em>peer support</em> atau model perilaku positif di lingkungan kelas.</div></div>
+  </div>
+  <div class="uraian-item" style="background:#FDEDEC;border-color:#F1948A">
+    <div class="uraian-badge" style="background:#FADBD8;color:#7B241C">T</div>
+    <div><div class="uraian-title">Siswa yang Kurang Disenangi</div>
+    <div class="uraian-desc">Siswa yang paling banyak dipilih pada kategori kurang disenangi adalah ${tdkNames||'—'}. Guru BK perlu menggali faktor penyebab secara individual dan memberikan pendampingan yang tepat untuk meningkatkan penerimaan sosial siswa tersebut di lingkungan kelas.</div></div>
+  </div>
+  <div class="uraian-item" style="background:#FEF9E7;border-color:#F9CA24">
+    <div class="uraian-badge" style="background:#FEF9E7;color:#7D5A00;border:1px solid #F9CA24">BK</div>
+    <div><div class="uraian-title">Siswa yang Perlu Perhatian Guru BK</div>
+    <div class="uraian-desc">Sebanyak <strong>${topBK.length} siswa</strong> dinominasikan oleh teman-temannya sebagai pihak yang perlu mendapat perhatian Guru BK, yaitu: ${bkNames||'—'}. <strong>Rekomendasi:</strong> jadwalkan sesi konseling individual dan koordinasi dengan wali kelas untuk tindak lanjut lebih lanjut.</div></div>
+  </div>
+  <div class="uraian-item">
+    <div class="uraian-badge" style="background:var(--bg);color:var(--muted)">D</div>
+    <div><div class="uraian-title">Dinamika Sosial Kelas</div>
+    <div class="uraian-desc">Dari <strong>${total} responden</strong>, dinamika kelas menunjukkan adanya variasi penerimaan sosial. Guru BK disarankan untuk memperhatikan siswa dengan status <em>terisolasi</em> atau <em>tertolak</em> secara sosial dan memberikan intervensi berupa kegiatan kelompok atau konseling kelompok untuk memperkuat ikatan sosial di kelas.</div></div>
+  </div>`;
+}
+
+// ── RENDER TABEL ──
+function renderTabel(){
+  const fk=document.getElementById('tbl-kelas').value;
+  let data=[...sosiData];
+  if(fk) data=data.filter(x=>x.kelas===fk);
+  const wrap=document.getElementById('tabelWrap');
+  if(data.length===0){wrap.innerHTML='<div class="empty"><span class="empty-icon">📭</span>Belum ada data.</div>';return;}
+  wrap.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>No.</th><th>Nama Lengkap</th><th>Panggilan</th><th>Absen</th><th>Kelas</th><th>JK</th><th>TA</th><th>Suka</th><th>Tdk Suka</th><th>BK</th><th>Tanggal</th><th>Hapus</th></tr></thead>
+    <tbody>${data.map((d,i)=>`<tr>
+      <td>${i+1}</td><td>${d.namaLengkap}</td><td><strong>${d.namaPanggil}</strong></td>
+      <td><span class="badge b-blue">${d.noAbsen}</span></td>
+      <td><span class="badge b-purple">${d.kelas}</span></td>
+      <td><span class="badge ${d.jenisKelamin==='L'?'b-blue':'b-red'}">${d.jenisKelamin}</span></td>
+      <td>${d.tahunPelajaran}</td>
+      <td style="font-size:11px">${d.q1.map(x=>x.nama).filter(n=>n!=='Tidak Ada').join(', ')||'<span style="color:var(--subtle)">—</span>'}</td>
+      <td style="font-size:11px">${d.q2.map(x=>x.nama).filter(n=>n!=='Tidak Ada').join(', ')||'<span style="color:var(--subtle)">—</span>'}</td>
+      <td style="font-size:11px">${d.q3.map(x=>x.nama).filter(n=>n!=='Tidak Ada').join(', ')||'<span style="color:var(--subtle)">—</span>'}</td>
+      <td style="font-size:11px;white-space:nowrap">${d.tanggal||d.timestamp||'—'}</td>
+      <td><span style="cursor:pointer;color:var(--danger);font-size:16px" onclick="hapusSatu(${d.id})">✕</span></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function hapusSatu(id){
+  sosiData=sosiData.filter(d=>d.id!==id);
+  localStorage.setItem('sosiData',JSON.stringify(sosiData));
+  updateKelasFilter();
+  renderTabel();
+}
+function hapusSemua(){
+  if(!confirm('Yakin hapus SEMUA data? Tindakan ini tidak dapat dibatalkan.')) return;
+  sosiData=[];
+  localStorage.setItem('sosiData','[]');
+  updateKelasFilter();
+  renderTabel();
+  showAlert('success','Semua data berhasil dihapus.');
+}
+
+function exportCSV(){
+  if(sosiData.length===0){showAlert('error','Tidak ada data untuk diekspor.');return;}
+  const headers=['Timestamp','Nama Lengkap','Panggilan','No Absen','Kelas','JK','TA','Suka1','Suka1_Alasan','Suka2','Suka2_Alasan','Suka3','Suka3_Alasan','Suka4','Suka4_Alasan','TdkSuka1','TdkSuka1_Alasan','TdkSuka2','TdkSuka2_Alasan','TdkSuka3','TdkSuka3_Alasan','TdkSuka4','TdkSuka4_Alasan','BK1','BK1_Alasan','BK2','BK2_Alasan','BK3','BK3_Alasan','BK4','BK4_Alasan'];
+  const rows=sosiData.map(d=>{
+    const r=[d.timestamp,d.namaLengkap,d.namaPanggil,d.noAbsen,d.kelas,d.jenisKelamin,d.tahunPelajaran];
+    for(let i=0;i<4;i++){const q=d.q1[i]||{nama:'',alasan:''};r.push(q.nama,q.alasan);}
+    for(let i=0;i<4;i++){const q=d.q2[i]||{nama:'',alasan:''};r.push(q.nama,q.alasan);}
+    for(let i=0;i<4;i++){const q=d.q3[i]||{nama:'',alasan:''};r.push(q.nama,q.alasan);}
+    return r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv=[headers.join(','),...rows].join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='sosiometri_bk_alhikmah.csv';a.click();
+}
+</script>
+</body>
+</html>

@@ -519,7 +519,29 @@ async function kirimData(){
   btn.disabled=true;
   btn.innerHTML='<span class="spin"></span> Mengirim...';
   try{
-    await fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    // Kirim via form submit (lebih reliable dari fetch untuk cross-origin)
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SHEET_URL;
+    form.target = 'hidden_iframe';
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+    // Tambah iframe tersembunyi sebagai target
+    var iframe = document.getElementById('hidden_iframe');
+    if(!iframe){
+      iframe = document.createElement('iframe');
+      iframe.name = 'hidden_iframe';
+      iframe.id = 'hidden_iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+    await new Promise(function(r){setTimeout(r,1500);});
   }catch(e){}
   // Populate success page
   document.getElementById('sName').textContent=payload.namaPanggil||payload.namaLengkap;

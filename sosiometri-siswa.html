@@ -345,7 +345,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 <script>
 // ── CONFIG ──
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbzuWLsr7vhYyq1GXoreGL2wJuHllLLePZJu7vV2K4ab2LEFChkuxN5ixlWM7lXkZs0c/exec";
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzUmkGvckG5edHfF2k0vYbWyxxzG_KpDc6Vbx_h0-WKc5Lf9XpJXEcxUWC4fxYRGZQ7/exec";
 
 // ── TANGGAL ──
 function formatDate(d){
@@ -519,29 +519,13 @@ async function kirimData(){
   btn.disabled=true;
   btn.innerHTML='<span class="spin"></span> Mengirim...';
   try{
-    // Kirim via form submit (lebih reliable dari fetch untuk cross-origin)
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = SHEET_URL;
-    form.target = 'hidden_iframe';
-    var input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'data';
-    input.value = JSON.stringify(payload);
-    form.appendChild(input);
-    // Tambah iframe tersembunyi sebagai target
-    var iframe = document.getElementById('hidden_iframe');
-    if(!iframe){
-      iframe = document.createElement('iframe');
-      iframe.name = 'hidden_iframe';
-      iframe.id = 'hidden_iframe';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-    }
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-    await new Promise(function(r){setTimeout(r,1500);});
+    // Kirim via fetch no-cors (cepat, tidak menunggu respons)
+    var encoded = encodeURIComponent(JSON.stringify(payload));
+    var getUrl = SHEET_URL + '?data=' + encoded;
+    try {
+      await fetch(getUrl, {method: 'GET', mode: 'no-cors'});
+    } catch(e) {}
+    await new Promise(function(r){setTimeout(r,500);});
   }catch(e){}
   // Populate success page
   document.getElementById('sName').textContent=payload.namaPanggil||payload.namaLengkap;

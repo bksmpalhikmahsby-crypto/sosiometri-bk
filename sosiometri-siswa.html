@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sosiometri Siswa — SMP Al Hikmah Surabaya</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1B4F72;--primary-mid:#2471A3;--primary-light:#5DADE2;
+  --accent:#1ABC9C;--accent-light:#A3E4D7;
+  --warn:#E67E22;--danger:#E74C3C;--success:#27AE60;
+  --bg:#F0F5FA;--card:#FFFFFF;--border:#D4E2EF;
+  --text:#1C2833;--muted:#6B7A8D;--subtle:#A9B8C8;
+  --radius:14px;--radius-sm:9px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── HEADER ── */
+.app-header{background:var(--primary);padding:0;overflow:hidden;position:relative}
+.header-inner{display:flex;align-items:center;gap:18px;padding:18px 28px;position:relative;z-index:1}
+.header-inner::before{content:'';position:absolute;right:-40px;top:-30px;width:200px;height:200px;background:rgba(255,255,255,.05);border-radius:50%}
+.logo-wrap{width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.25);flex-shrink:0}
+.logo-wrap span{font-size:20px;font-weight:700;color:#fff}
+.header-text h1{font-size:17px;font-weight:700;color:#fff;line-height:1.2}
+.header-text p{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px}
+.date-chip{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,.9);white-space:nowrap;flex-shrink:0}
+
+/* ── PROGRESS ── */
+.progress-wrap{background:var(--primary-mid);padding:12px 28px;display:flex;align-items:center;gap:6px}
+.prog-step{display:flex;align-items:center;gap:6px}
+.prog-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:all .3s}
+.prog-dot.active{background:#fff;color:var(--primary)}
+.prog-dot.done{background:var(--accent);color:#fff}
+.prog-dot.idle{background:rgba(255,255,255,.2);color:rgba(255,255,255,.6)}
+.prog-label{font-size:11px;color:rgba(255,255,255,.8);white-space:nowrap}
+.prog-line{flex:1;height:2px;background:rgba(255,255,255,.2);min-width:16px}
+.prog-line.done{background:var(--accent)}
+
+/* ── LAYOUT ── */
+.page{display:none}.page.active{display:block}
+.content{max-width:680px;margin:0 auto;padding:24px 20px}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:16px}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid var(--bg)}
+.card-head .icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--bg);flex-shrink:0}
+.card-head h2{font-size:14px;font-weight:700;color:var(--primary)}
+.card-head p{font-size:11px;color:var(--muted);margin-top:1px}
+
+/* ── FORM ── */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.fg label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.fg label .req{color:var(--danger)}
+.fg input,.fg select{padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text);font-family:inherit;background:#fff;outline:none;transition:border .2s,box-shadow .2s;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(93,173,226,.15)}
+.fg input[readonly]{background:#f8fbff;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* ── INSTRUKSI BOX ── */
+.instruksi{background:linear-gradient(135deg,#EBF5FB,#E8F8F5);border:1px solid #AED6F1;border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px}
+.instruksi h3{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.instruksi ul{padding-left:16px}
+.instruksi li{font-size:12px;color:var(--muted);line-height:1.8}
+
+/* ── SOSIOMETRI QUESTION ── */
+.q-section{margin-bottom:24px}
+.q-label{background:var(--primary);color:#fff;border-radius:var(--radius-sm) var(--radius-sm) 0 0;padding:12px 16px;font-size:13px;font-weight:600;line-height:1.5}
+.q-label .q-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:rgba(255,255,255,.25);border-radius:50%;font-size:11px;font-weight:700;margin-right:8px;flex-shrink:0;vertical-align:middle}
+.q-body{border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);overflow:hidden}
+.q-entry{padding:14px 16px;border-bottom:1px solid var(--bg)}
+.q-entry:last-child{border-bottom:none}
+.q-entry-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.entry-badge{width:26px;height:26px;background:var(--bg);border:1.5px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--primary);flex-shrink:0}
+.entry-badge.active-badge{background:var(--primary);border-color:var(--primary);color:#fff}
+.entry-label{font-size:12px;font-weight:600;color:var(--muted)}
+.entry-inputs{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+.mini-input{padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit;width:100%;outline:none;transition:border .2s;background:#fff;color:var(--text)}
+.mini-input:focus{border-color:var(--primary-light);box-shadow:0 0 0 2px rgba(93,173,226,.15)}
+.tidak-ada-wrap{padding:12px 16px;background:#FDFEFE}
+.tidak-ada-btn{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--muted)}
+.tidak-ada-btn input[type=checkbox]{width:16px;height:16px;accent-color:var(--primary);cursor:pointer}
+.disabled-overlay{opacity:.4;pointer-events:none}
+.add-btn{width:100%;padding:9px;border:1.5px dashed var(--border);border-radius:7px;background:transparent;color:var(--muted);font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px}
+.add-btn:hover{border-color:var(--primary-light);color:var(--primary);background:#EBF5FB}
+
+/* ── CONSENT ── */
+.consent{background:#FDFEFE;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;display:flex;gap:12px;align-items:flex-start}
+.consent input[type=checkbox]{width:18px;height:18px;margin-top:2px;accent-color:var(--primary);cursor:pointer;flex-shrink:0}
+.consent p{font-size:12px;color:var(--muted);line-height:1.7}
+.consent strong{color:var(--text);font-weight:600}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.btn{padding:11px 24px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#154360;transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{background:#1e8449;transform:translateY(-1px)}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+.btn-outline:hover{background:#EBF5FB}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+
+/* ── ALERT ── */
+.alert{border-radius:var(--radius-sm);padding:11px 14px;font-size:12px;margin-bottom:12px;display:none;align-items:center;gap:9px;border:1px solid}
+.alert.show{display:flex}
+.alert-error{background:#FDEDEC;border-color:#F1948A;color:#7B241C}
+.alert-success{background:#EAFAF1;border-color:#82E0AA;color:#1E6E3A}
+
+/* ── LOADING ── */
+.loading-btn{position:relative}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SUCCESS PAGE ── */
+.success-wrap{text-align:center;padding:40px 20px}
+.success-icon{font-size:64px;margin-bottom:16px;animation:pop .5s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.success-wrap h2{font-size:22px;font-weight:700;color:var(--success);margin-bottom:8px}
+.success-wrap p{font-size:13px;color:var(--muted);line-height:1.8;max-width:400px;margin:0 auto 24px}
+.summary-card{background:var(--bg);border-radius:var(--radius-sm);padding:16px;text-align:left;margin:0 auto 24px;max-width:420px}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.summary-row:last-child{border-bottom:none}
+.summary-row .sl{color:var(--muted)}
+.summary-row .sv{font-weight:600;color:var(--text)}
+
+@media(max-width:520px){
+  .grid2,.grid3{grid-template-columns:1fr}
+  .entry-inputs{grid-template-columns:1fr}
+  .header-inner{padding:14px 16px}
+  .content{padding:16px 14px}
+  .date-chip{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="header-inner">
+    <div class="logo-wrap"><span>BK</span></div>
+    <div class="header-text">
+      <h1>Instrumen Sosiometri Siswa</h1>
+      <p>SMP Al Hikmah Surabaya</p>
+    </div>
+    <div class="date-chip" id="dateChip">📅 —</div>
+  </div>
+</div>
+<div class="progress-wrap" id="progressBar">
+  <div class="prog-step">
+    <div class="prog-dot active" id="pd1">1</div>
+    <span class="prog-label">Identitas</span>
+  </div>
+  <div class="prog-line" id="pl1"></div>
+  <div class="prog-step">
+    <div class="prog-dot idle" id="pd2">2</div>
+    <span class="prog-label">Sosiometri</span>
+  </div>
+  <div class="prog-line" id="pl2"></div>
+  <div class="prog-step">
+    <div class="prog-dot idle" id="pd3">✓</div>
+    <span class="prog-label">Selesai</span>
+  </div>
+</div>
+
+<!-- PAGE 1: IDENTITAS -->
+<div class="page active" id="page1">
+<div class="content">
+  <div class="alert alert-error" id="errIdentitas"><span>⚠️</span><span id="errIdMsg">Lengkapi semua data yang wajib diisi.</span></div>
+  <div class="card">
+    <div class="card-head">
+      <div class="icon">🎓</div>
+      <div><h2>Data Diri Siswa</h2><p>Isi dengan lengkap dan sesuai data asli kamu</p></div>
+    </div>
+    <div class="grid2">
+      <div class="fg" style="grid-column:1/-1">
+        <label>Nama Lengkap <span class="req">*</span></label>
+        <input type="text" id="namaLengkap" placeholder="Tulis nama lengkap sesuai buku absen">
+      </div>
+      <div class="fg">
+        <label>Nama Panggilan <span class="req">*</span></label>
+        <input type="text" id="namaPanggil" placeholder="Nama yang biasa dipanggil">
+      </div>
+      <div class="fg">
+        <label>Nomor Absen <span class="req">*</span></label>
+        <input type="number" id="noAbsen" placeholder="Contoh: 15" min="1" max="50">
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="fg">
+        <label>Kelas <span class="req">*</span></label>
+        <select id="kelas">
+          <option value="">-- Pilih --</option>
+          <optgroup label="Kelas 7">
+            <option>7A</option><option>7B</option><option>7C</option><option>7D</option><option>7E</option><option>7F</option><option>7G</option><option>7H</option><option>7I</option>
+          </optgroup>
+          <optgroup label="Kelas 8">
+            <option>8A</option><option>8B</option><option>8C</option><option>8D</option><option>8E</option><option>8F</option><option>8G</option><option>8H</option><option>8I</option>
+          </optgroup>
+          <optgroup label="Kelas 9">
+            <option>9A</option><option>9B</option><option>9C</option><option>9D</option><option>9E</option><option>9F</option><option>9G</option><option>9H</option><option>9I</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Jenis Kelamin <span class="req">*</span></label>
+        <select id="jenisKelamin">
+          <option value="">-- Pilih --</option>
+          <option value="L">Laki-laki (L)</option>
+          <option value="P">Perempuan (P)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Tanggal Pengisian</label>
+        <input type="text" id="tanggalIsi" readonly>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goPage2()">Lanjutkan ke Sosiometri →</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 2: SOSIOMETRI -->
+<div class="page" id="page2">
+<div class="content">
+  <div class="alert alert-error" id="errSosio"><span>⚠️</span><span id="errSosioMsg">Periksa kembali jawaban kamu.</span></div>
+
+  <!-- Instruksi -->
+  <div class="instruksi">
+    <h3>📋 Petunjuk Pengisian</h3>
+    <ul>
+      <li>Tulislah <strong>nama panggilan</strong> teman-temanmu sesuai kondisi yang sebenarnya</li>
+      <li>Jawablah dengan <strong>jujur</strong> — data ini bersifat <strong>rahasia</strong> dan hanya digunakan untuk keperluan Bimbingan Konseling</li>
+      <li>Setiap pertanyaan, minimal sebutkan <strong>1 siswa</strong>, maksimal <strong>4 siswa</strong></li>
+      <li>Jika benar-benar tidak ada, kamu boleh memilih opsi <strong>"Tidak Ada"</strong></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="icon">📝</div>
+      <div><h2>Instrumen Sosiometri</h2><p>Isi dengan jujur dan penuh tanggung jawab</p></div>
+    </div>
+
+    <!-- Q1: DISENANGI -->
+    <div class="q-section">
+      <div class="q-label">
+        <span class="q-num">1</span>
+        Teman yang Kamu Senangi atau Dekat
+      </div>
+      <div style="background:#F0FBF8;padding:10px 16px;border:1.5px solid var(--border);border-top:none;font-size:12px;color:#1e6e3a;line-height:1.7">
+        Tulislah <strong>nama panggilan</strong> teman sekelas yang paling kamu senangi, akrab, atau nyaman untuk diajak bekerja sama dan berbagi cerita. Sebutkan minimal 1, maksimal 4 teman. Sertakan <strong>alasan singkat</strong> mengapa kamu menyenanginya.
+      </div>
+      <div class="q-body" id="q1-body">
+        <div class="tidak-ada-wrap" style="padding:10px 16px;background:#f8fffe;border-bottom:1px solid var(--bg)">
+          <label class="tidak-ada-btn">
+            <input type="checkbox" id="q1-none" onchange="toggleNone('q1',this.checked)">
+            <span>Saya <strong>tidak ada</strong> teman yang secara khusus saya senangi saat ini</span>
+          </label>
+        </div>
+        <div id="q1-entries"></div>
+      </div>
+    </div>
+
+    <!-- Q2: KURANG DISENANGI -->
+    <div class="q-section">
+      <div class="q-label" style="background:#7B241C">
+        <span class="q-num">2</span>
+        Teman yang Kurang Kamu Senangi atau Kurang Dekat
+      </div>
+      <div style="background:#FEF9F9;padding:10px 16px;border:1.5px solid var(--border);border-top:none;font-size:12px;color:#7B241C;line-height:1.7">
+        Tulislah <strong>nama panggilan</strong> teman sekelas yang kurang kamu senangi, kurang cocok, atau masih belum akrab denganmu. Ini bukan tentang membenci seseorang, melainkan membantu guru memahami dinamika pertemanan di kelas. Sebutkan minimal 1, maksimal 4 teman. Sertakan <strong>alasan singkatnya</strong>.
+      </div>
+      <div class="q-body" id="q2-body">
+        <div class="tidak-ada-wrap" style="padding:10px 16px;background:#fffcfc;border-bottom:1px solid var(--bg)">
+          <label class="tidak-ada-btn">
+            <input type="checkbox" id="q2-none" onchange="toggleNone('q2',this.checked)">
+            <span>Saya <strong>tidak ada</strong> teman yang secara khusus kurang saya senangi saat ini</span>
+          </label>
+        </div>
+        <div id="q2-entries"></div>
+      </div>
+    </div>
+
+    <!-- Q3: BUTUH BK -->
+    <div class="q-section">
+      <div class="q-label" style="background:#7D5A00">
+        <span class="q-num">3</span>
+        Teman yang Tampak Membutuhkan Perhatian atau Bantuan Guru BK
+      </div>
+      <div style="background:#FEFBF0;padding:10px 16px;border:1.5px solid var(--border);border-top:none;font-size:12px;color:#7D5A00;line-height:1.7">
+        Tulislah <strong>nama panggilan</strong> teman sekelas yang menurut pengamatanmu tampak membutuhkan perhatian lebih, mengalami masalah, atau perlu didampingi oleh guru Bimbingan Konseling. Misalnya: sering menyendiri, tampak sedih, sering bermasalah dengan teman, atau ada hal lain yang kamu perhatikan. Sertakan <strong>alasan atau gambaran singkat</strong> situasinya.
+      </div>
+      <div class="q-body" id="q3-body">
+        <div class="tidak-ada-wrap" style="padding:10px 16px;background:#fffdf5;border-bottom:1px solid var(--bg)">
+          <label class="tidak-ada-btn">
+            <input type="checkbox" id="q3-none" onchange="toggleNone('q3',this.checked)">
+            <span>Saya <strong>tidak melihat</strong> teman yang tampak membutuhkan perhatian khusus guru BK</span>
+          </label>
+        </div>
+        <div id="q3-entries"></div>
+      </div>
+    </div>
+
+    <!-- CONSENT -->
+    <div class="consent">
+      <input type="checkbox" id="consent">
+      <p>Saya menyatakan bahwa seluruh jawaban yang saya berikan di atas <strong>diisi dengan penuh kesadaran diri, tanpa paksaan dari pihak mana pun</strong>, dan sesuai dengan kondisi yang saya rasakan dan amati secara nyata. Saya memahami bahwa data ini bersifat <strong>rahasia</strong> dan hanya akan digunakan untuk keperluan Bimbingan dan Konseling di SMP Al Hikmah Surabaya.</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="goPage1()">← Kembali</button>
+      <button class="btn btn-success" id="btnKirim" onclick="kirimData()">✅ Setuju &amp; Kirim</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 3: SUKSES -->
+<div class="page" id="page3">
+<div class="content">
+  <div class="card">
+    <div class="success-wrap">
+      <div class="success-icon">🎉</div>
+      <h2>Terima Kasih!</h2>
+      <p>Data sosiometri kamu, <strong id="sName">—</strong>, telah berhasil dikirim.<br>Guru BK akan menggunakan data ini untuk membantu menciptakan lingkungan kelas yang lebih baik. <span style="color:var(--success);font-weight:600">Jawabanmu sangat berarti!</span></p>
+      <div class="summary-card">
+        <div class="summary-row"><span class="sl">Nama</span><span class="sv" id="sSiswa">—</span></div>
+        <div class="summary-row"><span class="sl">Kelas / Absen</span><span class="sv" id="sKelas">—</span></div>
+        <div class="summary-row"><span class="sl">Tanggal</span><span class="sv" id="sTgl">—</span></div>
+        <div class="summary-row"><span class="sl">Teman Disenangi</span><span class="sv" id="sSuka">—</span></div>
+        <div class="summary-row"><span class="sl">Teman Kurang Dekat</span><span class="sv" id="sTdk">—</span></div>
+        <div class="summary-row"><span class="sl">Nominasi Perhatian BK</span><span class="sv" id="sBK">—</span></div>
+      </div>
+      <button class="btn btn-outline" onclick="resetAll()">↩ Isi Ulang (Siswa Lain)</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── CONFIG ──
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzuWLsr7vhYyq1GXoreGL2wJuHllLLePZJu7vV2K4ab2LEFChkuxN5ixlWM7lXkZs0c/exec";
+
+// ── TANGGAL ──
+function formatDate(d){
+  const days=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+const NOW = new Date();
+const TANGGAL_STR = formatDate(NOW);
+const TANGGAL_ISO = NOW.toLocaleDateString('id-ID');
+document.getElementById('dateChip').textContent = '📅 ' + TANGGAL_STR;
+document.getElementById('tanggalIsi').value = TANGGAL_STR;
+
+// ── BUILD ENTRY ROWS ──
+function buildEntries(qId, maxN, color) {
+  const cont = document.getElementById(qId+'-entries');
+  cont.innerHTML = '';
+  // Start with 1 entry visible
+  addEntry(qId, 1, color);
+}
+
+function addEntry(qId, n, color) {
+  const cont = document.getElementById(qId+'-entries');
+  const existing = cont.querySelectorAll('.q-entry').length;
+  if (existing >= 4) return;
+  const idx = existing + 1;
+  const div = document.createElement('div');
+  div.className = 'q-entry';
+  div.id = qId+'-entry-'+idx;
+  div.innerHTML = `
+    <div class="q-entry-head">
+      <div class="entry-badge entry-badge-${qId}" id="${qId}-badge-${idx}">${idx}</div>
+      <span class="entry-label">Siswa ke-${idx}</span>
+      ${idx>1?`<span style="margin-left:auto;cursor:pointer;font-size:18px;color:var(--subtle);line-height:1" onclick="removeEntry('${qId}',${idx})" title="Hapus">×</span>`:''}
+    </div>
+    <div class="entry-inputs">
+      <input class="mini-input" id="${qId}-nama-${idx}" placeholder="Nama panggilan" type="text">
+      <input class="mini-input" id="${qId}-alasan-${idx}" placeholder="Alasan singkat..." type="text">
+    </div>`;
+  cont.appendChild(div);
+  // Update add button
+  updateAddBtn(qId, color);
+  // Mark first badge active
+  document.querySelectorAll('.entry-badge-'+qId).forEach((b,i)=>{
+    b.classList.toggle('active-badge', i===0);
+  });
+}
+
+function removeEntry(qId, n) {
+  const cont = document.getElementById(qId+'-entries');
+  const entry = document.getElementById(qId+'-entry-'+n);
+  if (entry) entry.remove();
+  // Re-number
+  const entries = cont.querySelectorAll('.q-entry');
+  entries.forEach((e,i)=>{
+    e.id = qId+'-entry-'+(i+1);
+    const badge = e.querySelector('.entry-badge');
+    if(badge) badge.textContent = i+1;
+    const lbl = e.querySelector('.entry-label');
+    if(lbl) lbl.textContent = 'Siswa ke-'+(i+1);
+    const inputs = e.querySelectorAll('.mini-input');
+    if(inputs[0]) inputs[0].id = qId+'-nama-'+(i+1);
+    if(inputs[1]) inputs[1].id = qId+'-alasan-'+(i+1);
+    const rm = e.querySelector('[onclick^="removeEntry"]');
+    if(rm) rm.setAttribute('onclick', `removeEntry('${qId}',${i+1})`);
+    if(i===0 && rm) rm.remove();
+  });
+  updateAddBtn(qId);
+}
+
+function updateAddBtn(qId, color) {
+  const cont = document.getElementById(qId+'-entries');
+  let btn = document.getElementById(qId+'-addbtn');
+  if(btn) btn.remove();
+  const count = cont.querySelectorAll('.q-entry').length;
+  if(count < 4) {
+    btn = document.createElement('button');
+    btn.id = qId+'-addbtn';
+    btn.className = 'add-btn';
+    btn.textContent = '+ Tambah teman lainnya (maks. 4)';
+    btn.onclick = ()=>addEntry(qId);
+    cont.after(btn);
+  }
+}
+
+// ── TOGGLE TIDAK ADA ──
+function toggleNone(qId, checked) {
+  const entries = document.getElementById(qId+'-entries');
+  const addBtn = document.getElementById(qId+'-addbtn');
+  if(checked){
+    entries.classList.add('disabled-overlay');
+    if(addBtn) addBtn.classList.add('disabled-overlay');
+  } else {
+    entries.classList.remove('disabled-overlay');
+    if(addBtn) addBtn.classList.remove('disabled-overlay');
+  }
+}
+
+// ── COLLECT DATA ──
+function collectQ(qId) {
+  const noneCheck = document.getElementById(qId+'-none');
+  if(noneCheck && noneCheck.checked) return [{nama:'Tidak Ada', alasan:''}];
+  const entries = document.getElementById(qId+'-entries').querySelectorAll('.q-entry');
+  const result = [];
+  entries.forEach((e,i)=>{
+    const ni = i+1;
+    const nama = document.getElementById(qId+'-nama-'+ni)?.value.trim()||'';
+    const alasan = document.getElementById(qId+'-alasan-'+ni)?.value.trim()||'';
+    if(nama) result.push({nama, alasan});
+  });
+  return result;
+}
+
+// ── PROGRESS ──
+function setProgress(n){
+  [1,2,3].forEach(i=>{
+    const d = document.getElementById('pd'+i);
+    d.className = 'prog-dot '+(i<n?'done':i===n?'active':'idle');
+    if(i<3) document.getElementById('pl'+i).className='prog-line '+(i<n?'done':'');
+  });
+}
+
+function goPage1(){setPage(1)}
+function goPage2(){
+  const n=document.getElementById('namaLengkap').value.trim();
+  const p=document.getElementById('namaPanggil').value.trim();
+  const a=document.getElementById('noAbsen').value.trim();
+  const k=document.getElementById('kelas').value;
+  const j=document.getElementById('jenisKelamin').value;
+  if(!n||!p||!a||!k||!j){showErr('errIdentitas','errIdMsg','Harap lengkapi semua data yang wajib diisi (*).');return;}
+  setPage(2);
+}
+
+function setPage(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('page'+i).classList.toggle('active',i===n);
+  });
+  setProgress(n);
+  window.scrollTo(0,0);
+}
+
+function showErr(alertId, msgId, msg){
+  const el=document.getElementById(alertId);
+  document.getElementById(msgId).textContent=msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),5000);
+}
+
+async function kirimData(){
+  if(!document.getElementById('consent').checked){
+    showErr('errSosio','errSosioMsg','Harap centang pernyataan persetujuan terlebih dahulu.');return;
+  }
+  const q1=collectQ('q1'), q2=collectQ('q2'), q3=collectQ('q3');
+  const hasQ1 = q1.length>0&&(q1[0].nama!=='Tidak Ada'||document.getElementById('q1-none').checked);
+  const hasQ2 = q2.length>0&&(q2[0].nama!=='Tidak Ada'||document.getElementById('q2-none').checked);
+  const hasQ3 = q3.length>0&&(q3[0].nama!=='Tidak Ada'||document.getElementById('q3-none').checked);
+  if(!hasQ1&&!document.getElementById('q1-none').checked){
+    showErr('errSosio','errSosioMsg','Jawab pertanyaan 1: tuliskan minimal 1 nama teman atau pilih "Tidak Ada".');return;
+  }
+  const payload={
+    timestamp: NOW.toLocaleString('id-ID'),
+    tanggal: TANGGAL_STR,
+    namaLengkap: document.getElementById('namaLengkap').value.trim(),
+    namaPanggil: document.getElementById('namaPanggil').value.trim(),
+    noAbsen: document.getElementById('noAbsen').value.trim(),
+    kelas: document.getElementById('kelas').value,
+    jenisKelamin: document.getElementById('jenisKelamin').value,
+    q1, q2, q3
+  };
+  const btn=document.getElementById('btnKirim');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin"></span> Mengirim...';
+  try{
+    await fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  }catch(e){}
+  // Populate success page
+  document.getElementById('sName').textContent=payload.namaPanggil||payload.namaLengkap;
+  document.getElementById('sSiswa').textContent=payload.namaLengkap+' ('+payload.namaPanggil+')';
+  document.getElementById('sKelas').textContent='Kelas '+payload.kelas+' / No. '+payload.noAbsen;
+  document.getElementById('sTgl').textContent=payload.tanggal;
+  const q1valid=q1.filter(x=>x.nama&&x.nama!=='Tidak Ada');
+  const q2valid=q2.filter(x=>x.nama&&x.nama!=='Tidak Ada');
+  const q3valid=q3.filter(x=>x.nama&&x.nama!=='Tidak Ada');
+  document.getElementById('sSuka').textContent=q1valid.length>0?q1valid.map(x=>x.nama).join(', '):'Tidak Ada';
+  document.getElementById('sTdk').textContent=q2valid.length>0?q2valid.map(x=>x.nama).join(', '):'Tidak Ada';
+  document.getElementById('sBK').textContent=q3valid.length>0?q3valid.map(x=>x.nama).join(', '):'Tidak Ada';
+  setPage(3);
+}
+
+function resetAll(){
+  document.getElementById('namaLengkap').value='';
+  document.getElementById('namaPanggil').value='';
+  document.getElementById('noAbsen').value='';
+  document.getElementById('kelas').value='';
+  document.getElementById('jenisKelamin').value='';
+  document.getElementById('consent').checked=false;
+  ['q1','q2','q3'].forEach(q=>{
+    document.getElementById(q+'-none').checked=false;
+    toggleNone(q,false);
+  });
+  init();
+  setPage(1);
+}
+
+function init(){
+  ['q1','q2','q3'].forEach(q=>{
+    buildEntries(q);
+  });
+}
+init();
+</script>
+</body>
+</html>

@@ -477,6 +477,59 @@ function simpanData(){
   updateKelasFilter();
 }
 
+async function ambilDariSheets() {
+  const btn = document.getElementById('btnAmbil');
+  const sync = document.getElementById('lastSync');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Mengambil...';
+  sync.textContent = '';
+  try {
+    const url = SHEET_URL + '?action=getData';
+    const res = await fetch(url, {mode:'cors'});
+    const json = await res.json();
+    if (json.status === 'ok' && json.data) {
+      // Konversi format Sheets ke format sosiData
+      const newData = json.data.map((row, idx) => {
+        const q1=[], q2=[], q3=[];
+        for(let i=0;i<4;i++){
+          if(row['Suka'+(i+1)]) q1.push({nama:row['Suka'+(i+1)]||'', alasan:row['Suka'+(i+1)+'_Alasan']||''});
+        }
+        for(let i=0;i<4;i++){
+          if(row['TdkSuka'+(i+1)]) q2.push({nama:row['TdkSuka'+(i+1)]||'', alasan:row['TdkSuka'+(i+1)+'_Alasan']||''});
+        }
+        for(let i=0;i<4;i++){
+          if(row['BK'+(i+1)]) q3.push({nama:row['BK'+(i+1)]||'', alasan:row['BK'+(i+1)+'_Alasan']||''});
+        }
+        return {
+          id: Date.now()+idx,
+          timestamp: row['Timestamp']||'',
+          tanggal: row['Tanggal']||'',
+          namaLengkap: row['Nama Lengkap']||'',
+          namaPanggil: row['Nama Panggil']||'',
+          noAbsen: row['No Absen']||'',
+          kelas: row['Kelas']||'',
+          jenisKelamin: row['JK']||'',
+          tahunPelajaran: '2024/2025',
+          q1, q2, q3
+        };
+      });
+      sosiData = newData;
+      localStorage.setItem('sosiData', JSON.stringify(sosiData));
+      updateKelasFilter();
+      renderHasil();
+      const now = new Date().toLocaleTimeString('id-ID');
+      sync.textContent = '✅ '+newData.length+' data dimuat · '+now;
+      showAlert('success', newData.length+' data siswa berhasil dimuat dari Google Sheets!');
+    } else {
+      showAlert('error', 'Gagal mengambil data: '+(json.msg||'Tidak ada data'));
+    }
+  } catch(err) {
+    showAlert('error', 'Tidak dapat terhubung ke Sheets. Pastikan Apps Script sudah di-deploy dengan akses Anyone.');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '📥 Ambil Data dari Sheets';
+}
+
 // ── EXCEL UPLOAD ──
 function handleDrop(e){
   e.preventDefault();
